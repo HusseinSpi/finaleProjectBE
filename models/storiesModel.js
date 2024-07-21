@@ -1,15 +1,19 @@
 const mongoose = require("mongoose");
 
+const paragraphSchema = new mongoose.Schema({
+  text: {
+    type: String,
+    required: true,
+  },
+});
+
 const storiesSchema = new mongoose.Schema(
   {
     title: {
       type: String,
       required: true,
     },
-    text: {
-      type: String,
-      required: true,
-    },
+    paragraphs: [paragraphSchema],
     img: {
       type: String,
       required: true,
