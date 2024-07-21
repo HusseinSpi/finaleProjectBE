@@ -8,6 +8,7 @@ const xss = require("xss-clean");
 const cookieParser = require("cookie-parser");
 
 const booksRoutes = require("./routes/storiesRoutes");
+const musicRoutes = require("./routes/musicRoutes");
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/images", express.static("images"));
 app.use("/sounds", express.static("sounds"));
 
 app.use("/api/v1/stories", booksRoutes);
+app.use("/api/v1/music", musicRoutes);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
