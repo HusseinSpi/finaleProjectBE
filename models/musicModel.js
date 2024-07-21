@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const musicSchema = new mongoose.Schema({
   type: {
-    type: string,
+    type: String,
     enum: ["general", "alphabet", "numbers"],
     required: true,
   },
