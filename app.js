@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 
 const booksRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
+const animalsGameRoutes = require("./routes/animalsGameRoutes");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/sounds", express.static("sounds"));
 
 app.use("/api/v1/stories", booksRoutes);
 app.use("/api/v1/music", musicRoutes);
+app.use("/api/v1/animalsGame", animalsGameRoutes);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
