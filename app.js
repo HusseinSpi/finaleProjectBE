@@ -13,6 +13,7 @@ const globalErrorHandler = require("./controllers/errorController");
 const storiesRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const animalsGameRoutes = require("./routes/animalsGameRoutes");
+const usersRoutes = require("./routes/userRoutes");
 
 const OpenAI = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -51,6 +52,7 @@ app.use("/sounds", express.static("sounds"));
 app.use("/api/v1/stories", storiesRoutes);
 app.use("/api/v1/music", musicRoutes);
 app.use("/api/v1/animalsGame", animalsGameRoutes);
+app.use("/api/v1/users", usersRoutes);
 
 const faqs = [
   {
