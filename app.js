@@ -22,7 +22,7 @@ const app = express();
 const cache = new NodeCache({ stdTTL: 600 });
 
 const corsOptions = {
-  origin: "*",
+  origin: "http://localhost:5173",
   credentials: true,
 };
 
