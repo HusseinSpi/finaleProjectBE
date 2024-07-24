@@ -9,8 +9,12 @@ const sendEmail = async (option) => {
     },
   });
 
+  console.log(
+    `username: ${process.env.EMAIL_userName}  and password: ${process.env.EMAIL_PASSWORD}`
+  );
+
   const mailOptions = {
-    from: "Hussein Khalil <haseenk852@gmail.com>",
+    from: "Hussein Khalil <huseeink852@gmail.com>",
     to: option.email,
     subject: option.subject,
     text: option.message,
