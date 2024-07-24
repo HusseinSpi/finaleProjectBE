@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 const app = require("./app");
+const http = require("http");
+const { Server } = require("socket.io");
+const Message = require("./models/messageModel");
 
 process.on("uncaughtException", (err) => {
   console.log("UNCAUGHT EXCEPTION! 💥 Shutting down...");
@@ -21,8 +24,34 @@ mongoose.connect(DB).then(() => {
 });
 
 const port = process.env.PORT || 3000;
-const server = app.listen(port, () => {
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+server.listen(port, () => {
   console.log(`App running on port ${port}...`);
+});
+
+io.on("connection", (socket) => {
+  socket.on("joinRoom", async (userId) => {
+    socket.join(userId);
+
+    const messages = await Message.find({
+      $or: [{ senderId: userId }, { recipientId: userId }],
+    }).sort({ timestamp: 1 });
+
+    socket.emit("loadMessages", messages);
+  });
+
+  socket.on("sendMessage", async ({ senderId, recipientId, message }) => {
+    const newMessage = await Message.create({ senderId, recipientId, message });
+    io.to(recipientId).emit("receiveMessage", newMessage);
+  });
 });
 
 process.on("unhandledRejection", (err) => {
