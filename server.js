@@ -38,19 +38,48 @@ server.listen(port, () => {
 });
 
 io.on("connection", (socket) => {
-  socket.on("joinRoom", async (userId) => {
-    socket.join(userId);
-
+  socket.on("joinRoom", async (userId, roomNumber) => {
+    socket.join(roomNumber);
+    console.log(`User ${userId} joined room ${roomNumber}`);
     const messages = await Message.find({
-      $or: [{ senderId: userId }, { recipientId: userId }],
+      roomNumber: roomNumber,
     }).sort({ timestamp: 1 });
 
     socket.emit("loadMessages", messages);
   });
 
-  socket.on("sendMessage", async ({ senderId, recipientId, message }) => {
-    const newMessage = await Message.create({ senderId, recipientId, message });
-    io.to(recipientId).emit("receiveMessage", newMessage);
+  socket.on("sendMessage", async ({ senderId, roomNumber, message }) => {
+    if (!roomNumber || !senderId || !message) {
+      console.error(
+        "Missing required fields: senderId, roomNumber, or message."
+      );
+      return;
+    }
+
+    try {
+      const newMessage = await Message.create({
+        senderId,
+        message,
+        roomNumber,
+      });
+      io.to(roomNumber).emit("receiveMessage", newMessage);
+    } catch (error) {
+      if (error.code === 11000) {
+        console.error("Duplicate key error: ", error.message);
+      } else {
+        console.error("Error creating message: ", error.message);
+      }
+    }
+  });
+
+  socket.on("getRooms", async () => {
+    const rooms = await Message.distinct("roomNumber");
+    socket.emit("loadRooms", rooms);
+  });
+
+  socket.on("endRoom", async (roomNumber) => {
+    await Message.deleteMany({ roomNumber: roomNumber });
+    io.emit("roomEnded", roomNumber);
   });
 });
 

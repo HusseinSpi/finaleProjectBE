@@ -7,6 +7,7 @@ const xss = require("xss-clean");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const NodeCache = require("node-cache");
+const crypto = require("crypto");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 
@@ -14,6 +15,8 @@ const storiesRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const animalsGameRoutes = require("./routes/animalsGameRoutes");
 const usersRoutes = require("./routes/userRoutes");
+
+const Message = require("./models/messageModel");
 
 const OpenAI = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -53,6 +56,31 @@ app.use("/api/v1/stories", storiesRoutes);
 app.use("/api/v1/music", musicRoutes);
 app.use("/api/v1/animalsGame", animalsGameRoutes);
 app.use("/api/v1/users", usersRoutes);
+
+const generateRoomNumber = async () => {
+  let roomNumber;
+  let isUnique = false;
+
+  while (!isUnique) {
+    roomNumber = crypto.randomBytes(3).toString("hex");
+    console.log(roomNumber);
+    const existingRoom = await Message.findOne({ room: roomNumber });
+    if (!existingRoom) {
+      isUnique = true;
+    }
+  }
+
+  return roomNumber;
+};
+
+app.get("/api/v1/getRoomNumber", async (req, res) => {
+  try {
+    const roomNumber = await generateRoomNumber();
+    res.status(200).json({ roomNumber });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to generate room number" });
+  }
+});
 
 const faqs = [
   {

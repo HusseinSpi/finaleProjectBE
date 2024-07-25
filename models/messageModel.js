@@ -5,11 +5,11 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  recipientId: {
+  message: {
     type: String,
     required: true,
   },
-  message: {
+  roomNumber: {
     type: String,
     required: true,
   },
