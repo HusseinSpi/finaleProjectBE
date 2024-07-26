@@ -37,6 +37,8 @@ server.listen(port, () => {
   console.log(`App running on port ${port}...`);
 });
 
+const closedRooms = new Set();
+
 io.on("connection", (socket) => {
   socket.on("joinRoom", async (userId, roomNumber) => {
     socket.join(roomNumber);
@@ -46,6 +48,9 @@ io.on("connection", (socket) => {
     }).sort({ timestamp: 1 });
 
     socket.emit("loadMessages", messages);
+    if (closedRooms.has(roomNumber)) {
+      socket.emit("roomEnded", roomNumber);
+    }
   });
 
   socket.on("sendMessage", async ({ senderId, roomNumber, message }) => {
@@ -53,6 +58,12 @@ io.on("connection", (socket) => {
       console.error(
         "Missing required fields: senderId, roomNumber, or message."
       );
+      return;
+    }
+
+    if (closedRooms.has(roomNumber)) {
+      console.error(`Room ${roomNumber} is closed. No new messages allowed.`);
+      socket.emit("roomClosed", roomNumber);
       return;
     }
 
@@ -73,13 +84,45 @@ io.on("connection", (socket) => {
   });
 
   socket.on("getRooms", async () => {
-    const rooms = await Message.distinct("roomNumber");
+    const rooms = await Message.aggregate([
+      {
+        $group: {
+          _id: "$roomNumber",
+          firstMessage: { $first: "$message" },
+          firstMessageDate: { $first: "$timestamp" },
+        },
+      },
+      {
+        $match: {
+          _id: { $nin: Array.from(closedRooms) },
+        },
+      },
+    ]);
+
     socket.emit("loadRooms", rooms);
   });
 
+  socket.on("getUserRooms", async (userId) => {
+    try {
+      const userRooms = await Message.aggregate([
+        { $match: { senderId: userId } },
+        {
+          $group: {
+            _id: "$roomNumber",
+            firstMessage: { $first: "$message" },
+            firstMessageDate: { $first: "$timestamp" },
+          },
+        },
+      ]);
+      socket.emit("loadUserRooms", userRooms);
+    } catch (error) {
+      console.error("Error fetching user rooms: ", error.message);
+    }
+  });
+
   socket.on("endRoom", async (roomNumber) => {
-    await Message.deleteMany({ roomNumber: roomNumber });
-    io.emit("roomEnded", roomNumber);
+    closedRooms.add(roomNumber);
+    io.to(roomNumber).emit("roomEnded", roomNumber);
   });
 });
 
