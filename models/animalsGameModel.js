@@ -5,6 +5,14 @@ const animalsGameSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  name_Ar: {
+    type: String,
+    required: true,
+  },
+  name_He: {
+    type: String,
+    required: true,
+  },
   imgUrl: {
     type: String,
     required: true,

@@ -13,12 +13,30 @@ const storiesSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    title_Ar: {
+      type: String,
+      required: true,
+    },
+    title_He: {
+      type: String,
+      required: true,
+    },
     paragraphs: [paragraphSchema],
+    paragraphs_Ar: [paragraphSchema],
+    paragraphs_He: [paragraphSchema],
     img: {
       type: String,
       required: true,
     },
     sound: {
+      type: String,
+      required: true,
+    },
+    sound_Ar: {
+      type: String,
+      required: true,
+    },
+    sound_He: {
       type: String,
       required: true,
     },
