@@ -17,9 +17,9 @@ const musicLanguageSchema = new mongoose.Schema({
 });
 
 const musicSchema = new mongoose.Schema({
-  En: [musicLanguageSchema],
-  Ar: [musicLanguageSchema],
-  He: [musicLanguageSchema],
+  en: [musicLanguageSchema],
+  ar: [musicLanguageSchema],
+  he: [musicLanguageSchema],
 });
 
 const Music = mongoose.model("Music", musicSchema);
