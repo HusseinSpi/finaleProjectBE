@@ -15,6 +15,7 @@ const storiesRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const animalsGameRoutes = require("./routes/animalsGameRoutes");
 const usersRoutes = require("./routes/userRoutes");
+const recentActivityRoutes = require("./routes/recentActivityRoutes");
 
 const Message = require("./models/messageModel");
 
@@ -56,6 +57,7 @@ app.use("/api/v1/stories", storiesRoutes);
 app.use("/api/v1/music", musicRoutes);
 app.use("/api/v1/animalsGame", animalsGameRoutes);
 app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/recent-activities", recentActivityRoutes);
 
 const generateRoomNumber = async () => {
   let roomNumber;
