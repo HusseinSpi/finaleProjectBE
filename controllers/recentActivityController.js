@@ -2,14 +2,20 @@ const RecentActivity = require("../models/recentActivityModel");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
-exports.getRecentActivity = catchAsync(async (req, res, next) => {
-  const recentActivity = await RecentActivity.find()
-    .sort({ date: -1 })
-    .limit(10);
+const getRecentActivity = catchAsync(async (req, res, next) => {
+  const activityTypes = ["game", "song", "story"];
+  const recentActivityPromises = activityTypes.map((type) =>
+    RecentActivity.find({ type }).sort({ date: -1 }).limit(10)
+  );
+
+  const recentActivities = await Promise.all(recentActivityPromises);
+
+  const mergedActivities = recentActivities.flat();
+
   res.status(200).json({
     status: "success",
-    results: recentActivity.length,
-    data: recentActivity,
+    results: mergedActivities.length,
+    data: mergedActivities,
   });
 });
 
