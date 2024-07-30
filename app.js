@@ -31,11 +31,11 @@ const corsOptions = {
   credentials: true,
 };
 
-const limiter = rateLimit({
-  max: 100,
-  windowMs: 15 * 60 * 1000,
-  message: "Too many requests from this IP, please try again later",
-});
+// const limiter = rateLimit({
+//   max: 100,
+//   windowMs: 15 * 60 * 1000,
+//   message: "Too many requests from this IP, please try again later",
+// });
 
 app.use(cors(corsOptions));
 app.use(helmet());
@@ -43,7 +43,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 app.use(xss());
-app.use(limiter);
+// app.use(limiter);
 
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
