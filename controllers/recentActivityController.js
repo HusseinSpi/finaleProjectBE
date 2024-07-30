@@ -2,7 +2,7 @@ const RecentActivity = require("../models/recentActivityModel");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
-const getRecentActivity = catchAsync(async (req, res, next) => {
+exports.getRecentActivity = catchAsync(async (req, res, next) => {
   const activityTypes = ["game", "song", "story"];
   const recentActivityPromises = activityTypes.map((type) =>
     RecentActivity.find({ type }).sort({ date: -1 }).limit(10)
