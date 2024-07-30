@@ -13,6 +13,10 @@ const RecentActivitySchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  user: {
+    type: String,
+    required: true,
+  },
 });
 
 const RecentActivity = mongoose.model("RecentActivity", RecentActivitySchema);
