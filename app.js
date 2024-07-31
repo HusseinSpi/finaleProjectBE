@@ -8,6 +8,8 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const NodeCache = require("node-cache");
 const crypto = require("crypto");
+const multer = require("multer");
+const sharp = require("sharp");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 
@@ -17,6 +19,7 @@ const animalsGameRoutes = require("./routes/animalsGameRoutes");
 const usersRoutes = require("./routes/userRoutes");
 const recentActivityRoutes = require("./routes/recentActivityRoutes");
 const wordsRoute = require("./routes/wordsRoutes");
+const booksRoute = require("./routes/booksRoutes");
 
 const Message = require("./models/messageModel");
 
@@ -60,6 +63,7 @@ app.use("/api/v1/animalsGame", animalsGameRoutes);
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/recent-activities", recentActivityRoutes);
 app.use("/api/v1/words", wordsRoute);
+app.use("/api/v1/books", booksRoute);
 
 const generateRoomNumber = async () => {
   let roomNumber;
@@ -148,6 +152,43 @@ app.post("/api/v1/openai", async (req, res, next) => {
     next(new AppError(error.message, 500));
   }
 });
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+app.post(
+  "/api/v1/analyzeDrawing",
+  upload.single("image"),
+  async (req, res, next) => {
+    try {
+      if (!req.file) {
+        return next(new AppError("Image file is required", 400));
+      }
+
+      const imageBuffer = await sharp(req.file.buffer)
+        .resize({ width: 512, height: 512 })
+        .toBuffer();
+
+      const base64Image = imageBuffer.toString("base64");
+
+      const completion = await openai.images.analyze({
+        image: base64Image,
+        model: "image-analysis-model",
+      });
+
+      const analysisResult = completion.data;
+
+      res.status(200).json({
+        status: "success",
+        data: analysisResult,
+      });
+    } catch (error) {
+      next(new AppError(error.message, 500));
+    }
+  }
+);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
