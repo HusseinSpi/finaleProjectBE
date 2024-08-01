@@ -9,6 +9,8 @@ const crypto = require("crypto");
 const NodeCache = require("node-cache");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
+const multer = require("multer");
+const path = require("path");
 
 const storiesRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
@@ -19,8 +21,10 @@ const wordsRoute = require("./routes/wordsRoutes");
 const booksRoute = require("./routes/booksRoutes");
 const videosRoute = require("./routes/videosRoutes");
 const articlesRoute = require("./routes/articlesRoutes");
+const drawRoute = require("./routes/drawRoutes");
 
 const Message = require("./models/messageModel");
+const Draw = require("./models/drawModel"); // استيراد نموذج Draw
 
 const OpenAI = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -58,6 +62,7 @@ app.use("/api/v1/words", wordsRoute);
 app.use("/api/v1/books", booksRoute);
 app.use("/api/v1/videos", videosRoute);
 app.use("/api/v1/articles", articlesRoute);
+app.use("/api/v1/draws", drawRoute);
 
 const generateRoomNumber = async () => {
   let roomNumber;
@@ -174,6 +179,42 @@ app.post("/api/v1/analyzeDrawing", async (req, res, next) => {
     res.status(200).json({
       status: "success",
       data: responseContent,
+    });
+  } catch (error) {
+    next(new AppError(error.message, 500));
+  }
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
+
+app.post("/api/v1/upload", upload.single("image"), async (req, res, next) => {
+  try {
+    const { user } = req.body;
+
+    if (!user) {
+      return next(new AppError("user are required", 400));
+    }
+
+    const newDraw = await Draw.create({
+      name: uniqueSuffix,
+      user,
+      filePath: req.file.path,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Image uploaded and data saved successfully",
+      data: newDraw,
     });
   } catch (error) {
     next(new AppError(error.message, 500));
