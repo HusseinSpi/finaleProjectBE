@@ -5,15 +5,10 @@ const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit");
-const NodeCache = require("node-cache");
 const crypto = require("crypto");
-const multer = require("multer");
-const sharp = require("sharp");
+const NodeCache = require("node-cache");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
-const tesseract = require("tesseract.js");
-const axios = require("axios");
 
 const storiesRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
@@ -68,7 +63,6 @@ const generateRoomNumber = async () => {
 
   while (!isUnique) {
     roomNumber = crypto.randomBytes(3).toString("hex");
-    console.log(roomNumber);
     const existingRoom = await Message.findOne({ room: roomNumber });
     if (!existingRoom) {
       isUnique = true;
@@ -128,7 +122,7 @@ app.post("/api/v1/openai", async (req, res, next) => {
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: userMessage }],
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       max_tokens: 100,
     });
 
@@ -144,53 +138,39 @@ app.post("/api/v1/openai", async (req, res, next) => {
   }
 });
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
-});
-
-app.post(
-  "/api/v1/analyzeDrawing",
-  upload.single("image"),
-  async (req, res, next) => {
-    try {
-      if (!req.file) {
-        return next(new AppError("Image file is required", 400));
-      }
-
-      const imageBuffer = await sharp(req.file.buffer)
-        .resize({ width: 512, height: 512 })
-        .toBuffer();
-
-      const {
-        data: { text },
-      } = await tesseract.recognize(imageBuffer, "eng");
-
-      const completion = await openai.chat.completions.create({
-        messages: [
-          {
-            role: "user",
-            content: `${req.file} Analyze this child's drawing and describe in detail the feelings the child may feel. Please provide a comprehensive analysis that includes possible reasons for these feelings, any important phrases or words that stand out, and any contextual clues that may indicate the child's mental state`,
-          },
-        ],
-        model: "gpt-4",
-        max_tokens: 500,
-      });
-
-      const responseContent = completion.choices[0].message.content;
-
-      res.status(200).json({
-        status: "success",
-        data: {
-          text,
-          analysis: responseContent,
+app.post("/api/v1/analyzeDrawing", async (req, res, next) => {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "what this image?",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: "https://finaleprojectbe.onrender.com/images/apple.png",
+              },
+            },
+          ],
         },
-      });
-    } catch (error) {
-      next(new AppError(error.message, 500));
-    }
+      ],
+    });
+
+    const responseContent = response.choices[0].message.content;
+
+    res.status(200).json({
+      status: "success",
+      data: responseContent,
+    });
+  } catch (error) {
+    next(new AppError(error.message, 500));
   }
-);
+});
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
