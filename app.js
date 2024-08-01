@@ -52,6 +52,7 @@ app.use((req, res, next) => {
 
 app.use("/images", express.static("images"));
 app.use("/sounds", express.static("sounds"));
+app.use("/uploads", express.static("uploads"));
 
 app.use("/api/v1/stories", storiesRoutes);
 app.use("/api/v1/music", musicRoutes);
