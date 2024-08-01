@@ -12,6 +12,8 @@ const multer = require("multer");
 const sharp = require("sharp");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
+const tesseract = require("tesseract.js");
+const axios = require("axios");
 
 const storiesRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
@@ -20,6 +22,7 @@ const usersRoutes = require("./routes/userRoutes");
 const recentActivityRoutes = require("./routes/recentActivityRoutes");
 const wordsRoute = require("./routes/wordsRoutes");
 const booksRoute = require("./routes/booksRoutes");
+const videosRoute = require("./routes/videosRoutes");
 
 const Message = require("./models/messageModel");
 
@@ -34,19 +37,12 @@ const corsOptions = {
   credentials: true,
 };
 
-// const limiter = rateLimit({
-//   max: 100,
-//   windowMs: 15 * 60 * 1000,
-//   message: "Too many requests from this IP, please try again later",
-// });
-
 app.use(cors(corsOptions));
 app.use(helmet());
 app.use(cookieParser());
 app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 app.use(xss());
-// app.use(limiter);
 
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
@@ -64,6 +60,7 @@ app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/recent-activities", recentActivityRoutes);
 app.use("/api/v1/words", wordsRoute);
 app.use("/api/v1/books", booksRoute);
+app.use("/api/v1/videos", videosRoute);
 
 const generateRoomNumber = async () => {
   let roomNumber;
@@ -131,14 +128,8 @@ app.post("/api/v1/openai", async (req, res, next) => {
 
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: userMessage }],
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       max_tokens: 100,
-      // temperature: 0.7, // Example of adding creativity level
-      // top_p: 0.9,       // Example of using nucleus sampling
-      // n: 1,             // To get a single response
-      // stop: ["\n"],     // Example of specifying a stop sequence
-      // presence_penalty: 0.5,  // To reduce topic repetition
-      // frequency_penalty: 0.5  // To reduce word repetition
     });
 
     const responseContent = completion.choices[0].message.content;
@@ -171,18 +162,29 @@ app.post(
         .resize({ width: 512, height: 512 })
         .toBuffer();
 
-      const base64Image = imageBuffer.toString("base64");
+      const {
+        data: { text },
+      } = await tesseract.recognize(imageBuffer, "eng");
 
-      const completion = await openai.images.analyze({
-        image: base64Image,
-        model: "image-analysis-model",
+      const completion = await openai.chat.completions.create({
+        messages: [
+          {
+            role: "user",
+            content: `${req.file} Analyze this child's drawing and describe in detail the feelings the child may feel. Please provide a comprehensive analysis that includes possible reasons for these feelings, any important phrases or words that stand out, and any contextual clues that may indicate the child's mental state`,
+          },
+        ],
+        model: "gpt-4",
+        max_tokens: 500,
       });
 
-      const analysisResult = completion.data;
+      const responseContent = completion.choices[0].message.content;
 
       res.status(200).json({
         status: "success",
-        data: analysisResult,
+        data: {
+          text,
+          analysis: responseContent,
+        },
       });
     } catch (error) {
       next(new AppError(error.message, 500));
