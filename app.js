@@ -162,7 +162,7 @@ app.post("/api/v1/analyzeDrawing", async (req, res, next) => {
           content: [
             {
               type: "text",
-              text: "what this image?",
+              text: "Analyze this child's drawing and describe in detail the feelings the child may feel. Please provide a comprehensive analysis that includes possible reasons for these feelings, any important phrases or words that stand out, and any contextual clues that may indicate the child's mental state",
             },
             {
               type: "image_url",
