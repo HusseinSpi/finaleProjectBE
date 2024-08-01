@@ -140,6 +140,12 @@ app.post("/api/v1/openai", async (req, res, next) => {
 
 app.post("/api/v1/analyzeDrawing", async (req, res, next) => {
   try {
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      return next(new AppError("Image URL is required", 400));
+    }
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -153,7 +159,7 @@ app.post("/api/v1/analyzeDrawing", async (req, res, next) => {
             {
               type: "image_url",
               image_url: {
-                url: "https://finaleprojectbe.onrender.com/images/apple.png",
+                url: imageUrl,
               },
             },
           ],
