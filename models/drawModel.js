@@ -5,11 +5,11 @@ const drawSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  user: {
+  analysis: {
     type: String,
     required: true,
   },
-  filePath: {
+  user: {
     type: String,
     required: true,
   },

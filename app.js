@@ -4,6 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
+const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const crypto = require("crypto");
 const NodeCache = require("node-cache");
@@ -11,7 +12,9 @@ const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 const multer = require("multer");
 const path = require("path");
+const fetch = require("node-fetch");
 
+// Routes
 const storiesRoutes = require("./routes/storiesRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const animalsGameRoutes = require("./routes/animalsGameRoutes");
@@ -23,9 +26,11 @@ const videosRoute = require("./routes/videosRoutes");
 const articlesRoute = require("./routes/articlesRoutes");
 const drawRoute = require("./routes/drawRoutes");
 
+// Models
 const Message = require("./models/messageModel");
-const Draw = require("./models/drawModel"); // استيراد نموذج Draw
+const Draw = require("./models/drawModel");
 
+// OpenAI
 const OpenAI = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -43,6 +48,8 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());
 app.use(xss());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
@@ -200,16 +207,41 @@ const upload = multer({ storage: storage });
 
 app.post("/api/v1/upload", upload.single("image"), async (req, res, next) => {
   try {
-    const { user } = req.body;
+    const user = req.body.user;
 
     if (!user) {
-      return next(new AppError("user are required", 400));
+      return next(new AppError("User is required", 400));
+    }
+
+    if (!req.file) {
+      return next(new AppError("Image file is required", 400));
+    }
+
+    console.log(req.file.path);
+    const imageUrl = `https://finaleprojectbe.onrender.com/${req.file.path}`;
+
+    const response = await fetch(
+      "https://finaleprojectbe.onrender.com/api/v1/analyzeDrawing",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageUrl }),
+      }
+    );
+
+    const responseData = await response.json();
+
+    console.log(responseData);
+    if (!response.ok) {
+      throw new Error(responseData.message || "Error analyzing drawing");
     }
 
     const newDraw = await Draw.create({
-      name: uniqueSuffix,
+      name: req.file.filename,
       user,
-      filePath: req.file.path,
+      analysis: responseData.data,
     });
 
     res.status(200).json({
