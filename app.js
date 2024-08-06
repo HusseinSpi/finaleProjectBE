@@ -46,8 +46,15 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const app = express();
 const cache = new NodeCache({ stdTTL: 600 });
 
+const whitelist = ["http://localhost:5173", "https://kiddofun.netlify.app"];
 const corsOptions = {
-  origin: "http://localhost:5173, https://kiddofun.netlify.app/",
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 };
 

@@ -27,7 +27,17 @@ const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://kiddofun.netlify.app"],
+    origin: function (origin, callback) {
+      const whitelist = [
+        "http://localhost:5173",
+        "https://kiddofun.netlify.app",
+      ];
+      if (whitelist.indexOf(origin) !== -1 || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
