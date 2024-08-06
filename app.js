@@ -33,6 +33,7 @@ const booksRoute = require("./routes/booksRoutes");
 const videosRoute = require("./routes/videosRoutes");
 const articlesRoute = require("./routes/articlesRoutes");
 const drawRoute = require("./routes/drawRoutes");
+const videoCallRoute = require("./routes/videoCallRoutes");
 
 // Models
 const Message = require("./models/messageModel");
@@ -46,7 +47,7 @@ const app = express();
 const cache = new NodeCache({ stdTTL: 600 });
 
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "http://localhost:5173, https://kiddofun.netlify.app/",
   credentials: true,
 };
 
@@ -79,6 +80,7 @@ app.use("/api/v1/books", booksRoute);
 app.use("/api/v1/videos", videosRoute);
 app.use("/api/v1/articles", articlesRoute);
 app.use("/api/v1/draws", drawRoute);
+app.use("/api/v1/video-call", videoCallRoute);
 
 const generateRoomNumber = async () => {
   let roomNumber;
