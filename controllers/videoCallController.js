@@ -37,3 +37,11 @@ exports.getScheduledTime = catchAsync(async (req, res, next) => {
     scheduledTime: videoCall.date,
   });
 });
+
+exports.getAllAppointment = catchAsync(async (req, res, next) => {
+  const videoCalls = await VideoCall.find({});
+  res.status(200).json({
+    status: "success",
+    data: videoCalls,
+  });
+});

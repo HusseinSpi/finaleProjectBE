@@ -5,6 +5,10 @@ const videoCallController = require("../controllers/videoCallController");
 const router = express.Router();
 
 router
+  .route("/")
+  .get(authController.protect, videoCallController.getAllAppointment);
+
+router
   .route("/generate-room-url")
   .get(authController.protect, videoCallController.createRoom)
   .post(authController.protect, videoCallController.appointmentBooking);
